@@ -1,0 +1,13 @@
+.anchor
+.DS_Store
+.so
+target/
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
+encrypted-ixs/arcis_temp_target
+build
+encrypted-ixs/src/main.rs
+artifacts/
+test-ledger/
