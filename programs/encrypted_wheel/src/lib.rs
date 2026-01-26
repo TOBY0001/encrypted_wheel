@@ -1,17 +1,28 @@
 use anchor_lang::prelude::*;
 use arcium_anchor::prelude::*;
+use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
 
 const COMP_DEF_OFFSET_SPIN: u32 = comp_def_offset("spin");
 
-declare_id!("ArsdHhJ73uQigxswkkiENxDGfiFGodZZsvcXQxB39vWH");
+declare_id!("G6sRoE2RjEqgpX5Yzr3j4ogxQMLxUgW3uAV183cjpujm");
 
 #[arcium_program]
 pub mod encrypted_wheel {
     use super::*;
 
     /// Initializes the computation definition for the wheel spin operation.
+    /// Uses offchain storage for the circuit (recommended for circuits > 100KB)
     pub fn init_spin_comp_def(ctx: Context<InitSpinCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, 0, None, None)?;
+        // Use offchain storage - circuit will be fetched by MPC nodes
+        // Circuit hosted at: https://github.com/TOBY0001/arcis-circuits
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://raw.githubusercontent.com/TOBY0001/arcis-circuits/main/spin.arcis".to_string(),
+                hash: [0; 32], // Hash verification not enforced yet
+            })),
+            None,
+        )?;
         Ok(())
     }
 
@@ -24,12 +35,12 @@ pub mod encrypted_wheel {
         nonce: u128,
     ) -> Result<()> {
         // Circuit has user: Shared parameter, so we must provide encryption context
-        // Pattern: ArcisPubkey, nonce, then other arguments
-        let args = vec![
-            Argument::ArcisPubkey(pub_key),
-            Argument::PlaintextU128(nonce),
-            Argument::PlaintextU8(num_segments),
-        ];
+        // Pattern: x25519_pubkey, nonce, then other arguments
+        let args = ArgBuilder::new()
+            .x25519_pubkey(pub_key)
+            .plaintext_u128(nonce)
+            .plaintext_u8(num_segments)
+            .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
@@ -38,8 +49,13 @@ pub mod encrypted_wheel {
             computation_offset,
             args,
             None,
-            vec![SpinCallback::callback_ix(&[])],
+            vec![SpinCallback::callback_ix(
+                computation_offset,
+                &ctx.accounts.mxe_account,
+                &[]
+            )?],
             1, // num_callback_txs
+            0, // cu_price_micro: priority fee in microlamports (0 = no priority fee)
         )?;
 
         Ok(())
@@ -49,15 +65,22 @@ pub mod encrypted_wheel {
     #[arcium_callback(encrypted_ix = "spin")]
     pub fn spin_callback(
         ctx: Context<SpinCallback>,
-        output: ComputationOutputs<SpinOutput>,
+        output: SignedComputationOutputs<SpinOutput>,
     ) -> Result<()> {
-        let result = match output {
-            ComputationOutputs::Success(SpinOutput { field_0 }) => {
+        // verify_output() validates the BLS signature from the MXE cluster
+        let result = match output.verify_output(
+            &ctx.accounts.cluster_account,
+            &ctx.accounts.computation_account
+        ) {
+            Ok(SpinOutput { field_0 }) => {
                 // Access the encrypted value from the ciphertexts array
                 // The actual decryption happens off-chain in the client
                 field_0.ciphertexts[0]
             },
-            _ => return Err(ErrorCode::AbortedComputation.into()),
+            Err(e) => {
+                msg!("Computation verification failed: {}", e);
+                return Err(ErrorCode::AbortedComputation.into())
+            },
         };
 
         emit!(SpinEvent { result });
@@ -76,30 +99,34 @@ pub struct Spin<'info> {
         init_if_needed,
         space = 9,
         payer = payer,
-        seeds = [&SIGN_PDA_SEED],
+        seeds = [b"ArciumSignerAccount"],
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, SignerAccount>,
+    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
     #[account(
         address = derive_mxe_pda!()
     )]
     pub mxe_account: Account<'info, MXEAccount>,
     #[account(
         mut,
-        address = derive_mempool_pda!()
+        address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
     /// CHECK: mempool_account, checked by the arcium program
     pub mempool_account: UncheckedAccount<'info>,
     #[account(
         mut,
-        address = derive_execpool_pda!()
+        address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
     /// CHECK: executing_pool, checked by the arcium program
     pub executing_pool: UncheckedAccount<'info>,
     #[account(
         mut,
-        address = derive_comp_pda!(computation_offset)
+        address = derive_comp_pda!(
+            computation_offset,
+            mxe_account,
+            ErrorCode::ClusterNotSet
+        )
     )]
     /// CHECK: computation_account, checked by the arcium program.
     pub computation_account: UncheckedAccount<'info>,
@@ -118,6 +145,7 @@ pub struct Spin<'info> {
     )]
     pub pool_account: Account<'info, FeePool>,
     #[account(
+        mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS,
     )]
     pub clock_account: Account<'info, ClockAccount>,
@@ -127,12 +155,32 @@ pub struct Spin<'info> {
 
 #[callback_accounts("spin")]
 #[derive(Accounts)]
+#[instruction(computation_offset: u64)]
 pub struct SpinCallback<'info> {
     pub arcium_program: Program<'info, Arcium>,
     #[account(
         address = derive_comp_def_pda!(COMP_DEF_OFFSET_SPIN)
     )]
     pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    #[account(
+        mut,
+        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+    )]
+    pub cluster_account: Account<'info, Cluster>,
+    #[account(
+        mut,
+        address = derive_comp_pda!(
+            computation_offset,
+            mxe_account,
+            ErrorCode::ClusterNotSet
+        )
+    )]
+    /// CHECK: computation_account, checked by the arcium program.
+    pub computation_account: UncheckedAccount<'info>,
+    #[account(
+        address = derive_mxe_pda!()
+    )]
+    pub mxe_account: Account<'info, MXEAccount>,
     #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
     /// CHECK: instructions_sysvar, checked by the account constraint
     pub instructions_sysvar: AccountInfo<'info>,

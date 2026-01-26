@@ -11,3 +11,12 @@ backends = ["Cerberus"]
 # Each path is copied to corresponding node's artifacts/manticore/computation_folder_N
 # Example: manticore_data_folders = ["./data/player-0", "./data/player-1"]
 # manticore_data_folders = []
+
+# Cluster configs for non-localnet testing
+# Get offset from `arcium deploy` or `arcium init-mxe` output
+# NOTE: Update the offset below with your actual cluster offset after redeploying to v0.6.2
+[clusters.devnet]
+offset = 456  # TODO: Update this with your actual cluster offset after redeploy
+
+# [clusters.mainnet]
+# offset = 789  # Uncomment and set your mainnet offset if needed

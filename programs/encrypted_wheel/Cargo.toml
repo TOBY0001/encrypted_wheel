@@ -25,6 +25,6 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"
 [dependencies]
 anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
 
-arcium-client = { version = "0.4.0", default-features = false }
-arcium-macros = "0.4.0"
-arcium-anchor = "0.4.0"
+arcium-client = { version = "0.6.4", default-features = false }
+arcium-macros = "0.6.4"
+arcium-anchor = "0.6.4"

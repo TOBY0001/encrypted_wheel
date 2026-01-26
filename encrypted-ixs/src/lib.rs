@@ -1,8 +1,8 @@
-use arcis_imports::*;
+use arcis::*;
 
 #[encrypted]
 mod circuits {
-    use arcis_imports::*;
+    use arcis::*;
 
     #[instruction]
     pub fn spin(user: Shared, num_segments: u8) -> Enc<Shared, u8> {

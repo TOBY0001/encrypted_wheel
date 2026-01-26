@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-encrypted_wheel = "FGJU8MoGAm61LQNZekvMhacoVPzmvcjh16kXaTbqqbM6"
+encrypted_wheel = "G6sRoE2RjEqgpX5Yzr3j4ogxQMLxUgW3uAV183cjpujm"
 
 [programs.devnet]
-encrypted_wheel = "FGJU8MoGAm61LQNZekvMhacoVPzmvcjh16kXaTbqqbM6"
+encrypted_wheel = "G6sRoE2RjEqgpX5Yzr3j4ogxQMLxUgW3uAV183cjpujm"
 
 [registry]
 url = "https://api.apr.dev"
