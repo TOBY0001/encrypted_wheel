@@ -4,7 +4,7 @@ use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
 
 const COMP_DEF_OFFSET_SPIN: u32 = comp_def_offset("spin");
 
-declare_id!("G6sRoE2RjEqgpX5Yzr3j4ogxQMLxUgW3uAV183cjpujm");
+declare_id!("BvRkheZC465X6PhhkHrkuUo1o7mHWF1d1tJm3kzts92o");
 
 #[arcium_program]
 pub mod encrypted_wheel {
@@ -41,14 +41,12 @@ pub mod encrypted_wheel {
             .plaintext_u128(nonce)
             .plaintext_u8(num_segments)
             .build();
-
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
         queue_computation(
             ctx.accounts,
             computation_offset,
             args,
-            None,
             vec![SpinCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
@@ -193,13 +191,19 @@ pub struct InitSpinCompDef<'info> {
     pub payer: Signer<'info>,
     #[account(
         mut,
-        address = derive_mxe_pda!()
+        address = derive_mxe_pda!(),
     )]
     pub mxe_account: Box<Account<'info, MXEAccount>>,
     #[account(mut)]
     /// CHECK: comp_def_account, checked by arcium program.
     /// Can't check it here as it's not initialized yet.
     pub comp_def_account: UncheckedAccount<'info>,
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    /// CHECK: address_lookup_table, checked by arcium program.
+    pub address_lookup_table: UncheckedAccount<'info>,
+    #[account(address = LUT_PROGRAM_ID)]
+    /// CHECK: lut_program is the Address Lookup Table program.
+    pub lut_program: UncheckedAccount<'info>,
     pub arcium_program: Program<'info, Arcium>,
     pub system_program: Program<'info, System>,
 }

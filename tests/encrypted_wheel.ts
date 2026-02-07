@@ -20,6 +20,8 @@ import {
   getComputationAccAddress,
   getMXEPublicKey,
   getClusterAccAddress,
+  getLookupTableAddress,
+  getArciumProgram,
 } from "@arcium-hq/client";
 import { SystemProgram } from "@solana/web3.js";
 
@@ -178,7 +180,7 @@ describe("EncryptedWheel", () => {
         Array.from(publicKey),
         new anchor.BN(deserializeLE(nonce).toString())
       )
-      .accounts(spinAccounts)
+      .accountsPartial(spinAccounts)
       .signers([owner])
       .rpc({ skipPreflight: true, commitment: "confirmed" });
     console.log("Queue sig is ", queueSig);
@@ -218,6 +220,12 @@ describe("EncryptedWheel", () => {
     const compDefAccountInfo = await provider.connection.getAccountInfo(compDefPDA);
     let sig: string;
 
+    // Fetch MXE account to get lutOffsetSlot for LUT address derivation (v0.7.0)
+    const mxeAccount = getMXEAccAddress(program.programId);
+    const arciumProgram = getArciumProgram(provider as anchor.AnchorProvider);
+    const mxeAcc = await arciumProgram.account.mxeAccount.fetch(mxeAccount);
+    const lutAddress = getLookupTableAddress(program.programId, mxeAcc.lutOffsetSlot);
+
     if (compDefAccountInfo && compDefAccountInfo.data.length > 0) {
       console.log("CompDef account already exists, skipping initialization");
       sig = "skipped-already-exists";
@@ -228,7 +236,8 @@ describe("EncryptedWheel", () => {
           .accounts({
             compDefAccount: compDefPDA,
             payer: owner.publicKey,
-            mxeAccount: getMXEAccAddress(program.programId),
+            mxeAccount,
+            addressLookupTable: lutAddress,
           })
           .signers([owner])
           .rpc({

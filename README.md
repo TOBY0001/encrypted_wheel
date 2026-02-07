@@ -96,7 +96,7 @@ pub struct SpinEvent {
 
 ## Deployment
 
-**Program ID:** `3GZZYgKW2yZMMLihx31E5PAm2q5dVuD8ESBghNeLsjsN`
+**Program ID:** `BvRkheZC465X6PhhkHrkuUo1o7mHWF1d1tJm3kzts92o`
 
 **Network:** Solana Devnet (Helius RPC)
 
@@ -154,11 +154,11 @@ yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `anchor-lang` | 0.32.1 | Solana program framework |
-| `arcium-anchor` | 0.6.4 | Arcium integration with Anchor |
-| `arcium-client` | 0.6.4 | Arcium client utilities |
-| `arcium-macros` | 0.6.4 | Arcium procedural macros |
-| `arcis-imports` | 0.6.4 | Arcium circuit primitives |
-| `@arcium-hq/client` | 0.6.4 | TypeScript client SDK |
+| `arcium-anchor` | 0.8.0 | Arcium integration with Anchor |
+| `arcium-client` | 0.8.0 | Arcium client utilities |
+| `arcium-macros` | 0.8.0 | Arcium procedural macros |
+| `arcis-imports` | 0.8.0 | Arcium circuit primitives |
+| `@arcium-hq/client` | 0.8.0 | TypeScript client SDK |
 
 ## Configuration
 
@@ -175,7 +175,7 @@ backends = ["Cerberus"]        # MPC backend
 
 ```toml
 [programs.devnet]
-encrypted_wheel = "G6sRoE2RjEqgpX5Yzr3j4ogxQMLxUgW3uAV183cjpujm"
+encrypted_wheel = "BvRkheZC465X6PhhkHrkuUo1o7mHWF1d1tJm3kzts92o"
 
 [provider]
 cluster = "devnet"
