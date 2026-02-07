@@ -105,14 +105,14 @@ pub struct SpinEvent {
 - [Rust](https://rustup.rs/) (1.89.0 via `rust-toolchain.toml`)
 - [Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
 - [Anchor CLI](https://www.anchor-lang.com/docs/installation) (0.32.1)
-- [Arcium CLI](https://docs.arcium.com) (0.5.1)
+- [Arcium CLI](https://docs.arcium.com) (0.8.0)
 - [Node.js](https://nodejs.org/) & Yarn
 
 ## Installation
 
 ```bash
 # Install dependencies
-yarn install
+npm install
 
 # Build the program
 arcium build
@@ -131,11 +131,6 @@ Before spinning, the computation definition must be initialized (one-time):
 arcium test --skip-local-validator
 ```
 
-### Running Tests
-
-```bash
-yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts
-```
 
 ## Usage Flow
 
