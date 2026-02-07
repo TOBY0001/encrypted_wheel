@@ -187,7 +187,6 @@ cluster = "devnet"
 
 - [Arcium Developer Docs](https://docs.arcium.com/developers)
 - [Arcium TypeScript SDK](https://ts.arcium.com/api)
-- [Arcium LLM Context](https://docs.arcium.com/llms-full.txt)
 - [Anchor Documentation](https://www.anchor-lang.com/)
 
 ## License
