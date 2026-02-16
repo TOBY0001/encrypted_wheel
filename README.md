@@ -10,6 +10,11 @@ Encrypted Wheel leverages Arcium's MXE (Multi-party eXecution Environment) to pe
 - **Verifiability**: Results are cryptographically signed by the MPC cluster
 - **Privacy**: The random value is encrypted and only the requesting user can decrypt it
 
+
+## Front-end repo
+
+https://github.com/TOBY0001/arcis-wheel
+
 ## Architecture
 
 ```
